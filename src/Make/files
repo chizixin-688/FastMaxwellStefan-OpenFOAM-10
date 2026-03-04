@@ -1,0 +1,7 @@
+makeMSwithFluidReactionThermo.C
+LUsolver/LUsolver.C
+LUsolver/LUxSolve.C
+CKDDreader/CKDDreader.C
+FastMaxwellStefan/FastMaxwellStefan.C
+FastMaxwellStefan/FastMaxwellStefanMatrixMultiply.C
+LIB = $(FOAM_USER_LIBBIN)/libFastFullMultiComponentTransport
