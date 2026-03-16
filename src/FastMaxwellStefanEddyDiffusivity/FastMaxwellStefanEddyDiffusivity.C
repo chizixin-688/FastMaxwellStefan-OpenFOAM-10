@@ -383,6 +383,7 @@ tmp<fvScalarMatrix> FastMaxwellStefanEddyDiffusivity<TurbulenceThermophysicalTra
 template<class TurbulenceThermophysicalTransportModel>
 void FastMaxwellStefanEddyDiffusivity<TurbulenceThermophysicalTransportModel>::correct()
 {
+    this->correctAlphat();
     if(MS.logPolynomial()==true)
     {
         MS.correctUsingPolynomial();
