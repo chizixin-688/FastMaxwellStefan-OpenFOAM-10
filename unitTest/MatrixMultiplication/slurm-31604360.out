@@ -1,0 +1,90 @@
+
+Matrix size: 8192 x 8192 * 8192 x 8192
+MKL dgemm time: 13.6606 s
+My  gemm time: 335.864 s
+Speedup (MKL / My): 24.5863
+L2 error:         3.7328374059561916e-08
+Relative L2 error:2.2245691796667646e-15
+Max absolute error:2.6375346351414919e-11
+Max relative error:1.281442184665035e-14
+
+Matrix size: 4096 x 4096 * 4096 x 4096
+MKL dgemm time: 1.4456658339999999 s
+My  gemm time: 37.411749135000001 s
+Speedup (MKL / My): 25.87855938428438
+L2 error:         6.6681799016518408e-09
+Relative L2 error:1.5898858724345778e-15
+Max absolute error:8.6401996668428183e-12
+Max relative error:8.3865766900276643e-15
+
+Matrix size: 2048 x 2048 * 2048 x 2048
+MKL dgemm time: 0.18235685200000001 s
+My  gemm time: 2.8881957439999999 s
+Speedup (MKL / My): 15.838153117492945
+L2 error:         1.2092325665342675e-09
+Relative L2 error:1.1537072454699253e-15
+Max absolute error:3.2969182939268649e-12
+Max relative error:6.5607783446869425e-15
+
+Matrix size: 1024 x 1024 * 1024 x 1024
+MKL dgemm time: 0.02322120288 s
+My  gemm time: 0.16158428277999998 s
+Speedup (MKL / My): 6.9584802998801401
+L2 error:         2.1965966870104364e-10
+Relative L2 error:8.378126422758164e-16
+Max absolute error:1.0231815394945443e-12
+Max relative error:4.0238519350685297e-15
+
+Matrix size: 512 x 512 * 512 x 512
+MKL dgemm time: 0.0028211496910000001 s
+My  gemm time: 0.020277457626999999 s
+Speedup (MKL / My): 7.1876574616685236
+L2 error:         3.9573658372061287e-11
+Relative L2 error:6.032189669785768e-16
+Max absolute error:4.2632564145606011e-13
+Max relative error:3.1155586525038405e-15
+
+Matrix size: 256 x 256 * 256 x 256
+MKL dgemm time: 0.00037862437189999998 s
+My  gemm time: 0.0016803710646 s
+Speedup (MKL / My): 4.4380953507235121
+L2 error:         0
+Relative L2 error:0
+Max absolute error:0
+Max relative error:0
+
+Matrix size: 128 x 128 * 128 x 128
+MKL dgemm time: 4.6574969025000004e-05 s
+My  gemm time: 0.00012419941249500001 s
+Speedup (MKL / My): 2.6666558259723931
+L2 error:         0
+Relative L2 error:0
+Max absolute error:0
+Max relative error:0
+
+Matrix size: 64 x 64 * 64 x 64
+MKL dgemm time: 6.0546922854999998e-06 s
+My  gemm time: 1.3955933807999999e-05 s
+Speedup (MKL / My): 2.3049782135786128
+L2 error:         0
+Relative L2 error:0
+Max absolute error:0
+Max relative error:0
+
+Matrix size: 32 x 32 * 32 x 32
+MKL dgemm time: 9.5094284909999994e-07 s
+My  gemm time: 1.59980714445e-06 s
+Speedup (MKL / My): 1.6823378460273446
+L2 error:         0
+Relative L2 error:0
+Max absolute error:0
+Max relative error:0
+
+Matrix size: 16 x 16 * 16 x 16
+MKL dgemm time: 2.7690803356000003e-07 s
+My  gemm time: 2.2113669934e-07 s
+Speedup (MKL / My): 0.79859257420960461
+L2 error:         0
+Relative L2 error:0
+Max absolute error:0
+Max relative error:0

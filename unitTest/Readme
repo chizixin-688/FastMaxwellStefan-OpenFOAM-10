@@ -1,0 +1,4 @@
+These two folders contain comparisons of computational accuracy and efficiency between the matrix multiplication and matrix inversion (via LU decomposition and back-substitution) implemented by the authors and the MKL library.
+Compilation can be performed using the make.sh script, and the MKL library must be installed on the computer.
+slurm-31604360.out and slurm-31604782.out contain the computation results obtained by the authors on Intel Xeon Platinum 9242 processors.
+When using MKL, the AVX2 instruction set was enabled, single-thread execution was used, and dynamic scheduling was disabled.
