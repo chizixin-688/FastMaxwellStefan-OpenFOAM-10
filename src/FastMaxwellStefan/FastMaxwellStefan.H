@@ -387,6 +387,10 @@ public:
                 std::cout<<Mat[i*N+j]<<std::endl;
             }
         }
+
+        void printDField();
+        void printDField(int i);
+
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

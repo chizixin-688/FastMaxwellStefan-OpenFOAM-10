@@ -539,12 +539,12 @@ void FastMaxwellStefan::transformDiffusionCoefficient
 
     double* __restrict__ invA = M1;
     std::memset(invA,0,Ns*Ns*sizeof(double));
-    Lu.setInvMatrix(invA);
-    Lu.calcInvMatrix(invA);
-
-    double* __restrict__ Dref = M0;
-    std::memset(Dref,0,Ns*Ns*sizeof(double));
-    (this->*MMPtr)(Dref,invA,B,Ns);
+    Lu.setInvMatrix(M2);
+    Lu.calcInvMatrix(M2);
+    std::memcpy(M0,M2,Ns*Ns*sizeof(double));
+    //double* __restrict__ Dref = M0;
+    //std::memset(Dref,0,Ns*Ns*sizeof(double));
+    //(this->*MMPtr)(Dref,invA,B,Ns);
 }
 
 
@@ -1691,9 +1691,9 @@ void FastMaxwellStefan::transformDFieldsUsingInterpolation
             __m256d r3 = load256d(&(*YPtrsRef[j+3])[idx+0]);
             this->transpose4x4_pd(r0,r1,r2,r3);
             store256d(&Y[(idx+0)*Ns+j+0],r0);
-            store256d(&Y[(idx+1)*Ns+j+0],r0);
-            store256d(&Y[(idx+2)*Ns+j+0],r0);
-            store256d(&Y[(idx+3)*Ns+j+0],r0);
+            store256d(&Y[(idx+1)*Ns+j+0],r1);
+            store256d(&Y[(idx+2)*Ns+j+0],r2);
+            store256d(&Y[(idx+3)*Ns+j+0],r3);
         }
         for(int idx=times-timesRemain; idx<times; idx=idx+1)
         {
@@ -1802,9 +1802,9 @@ void FastMaxwellStefan::transformDFieldsUsingPolynomial
             __m256d r3 = load256d(&(*YPtrsRef[j+3])[idx+0]);
             this->transpose4x4_pd(r0,r1,r2,r3);
             store256d(&Y[(idx+0)*Ns+j+0],r0);
-            store256d(&Y[(idx+1)*Ns+j+0],r0);
-            store256d(&Y[(idx+2)*Ns+j+0],r0);
-            store256d(&Y[(idx+3)*Ns+j+0],r0);
+            store256d(&Y[(idx+1)*Ns+j+0],r1);
+            store256d(&Y[(idx+2)*Ns+j+0],r2);
+            store256d(&Y[(idx+3)*Ns+j+0],r3);
         }
         for(int idx=times-timesRemain; idx<times; idx=idx+1)
         {
@@ -2081,130 +2081,94 @@ void FastMaxwellStefan::correctUsingInterpolation()
 }
 
 
-
-void FastMaxwellStefan::getSoretCoeffUsingBartlett
-(
-    const volScalarField& T,
-    const volScalarField& p,
-    const volScalarField& rho,
-    const double* __restrict__ W0511,
-    const double* __restrict__ W0489,
-    const double* __restrict__ invW,
-    const PtrList<volScalarField>& Yfields,
-    PtrList<volScalarField>& DT,
-    const int Ns
-)
+void FastMaxwellStefan::printDField()
 {
-    const double Ru = 8314.470066505449722171761095523834228515625; 
-
-    // Do the internal field
-    const int times0 = T.internalField().size();
-    std::vector<double> SumX0511(times0,0);
-    std::vector<double> SumX0489(times0,0);
-    std::vector<double> r0(times0);
-    std::vector<double> Tr0(times0);
-    for(int j=0; j<Ns; j++)
+    Info<<"printing diffusion coefficient fields"<<endl;
+    for(int i=0;i<this->nSpecies;i++)
     {
-        const double W0511j = W0511[j];
-        const double W0489j = W0489[j];
-        const double invWj = invW[j];
-
-        double* __restrict__ X = &this->Arr0[j*times0];
-        double* __restrict__ WX0 = &this->Mat0[j*times0];//5.11
-        const double* __restrict__ YPtr = &Yfields[j].internalField()[0];
-        const double* __restrict__ rhoPtr = &rho.internalField()[0];
-        const double* __restrict__ pPtr = &p.internalField()[0];
-        const double* __restrict__ TPtr = &T.internalField()[0];
-
-        for(int idx=0; idx<times0; idx++)
+        for(int j=0;j<this->nSpecies;j++)
+    {
+            if(i==j)
+    {
+                Info<<i<<"|"<<j<<endl;
+    {
+                    const int times = this->Dii_[i].internalField().size();
+                    for(int idx=0;idx<times;idx++)
         {
-            const double rhoi = rhoPtr[idx];
-            const double pi = pPtr[idx];
-            const double Yji = YPtr[idx];
-            const double Ti = TPtr[idx];
-            const double Xji = Yji*rhoi*Ru*Ti/pi*invWj;
-            X[idx] = Xji;
-            WX0[idx] = W0511j*Xji;
-            SumX0511[idx] += W0511j*Xji;
-            SumX0489[idx] += W0489j*Xji;
-        }
-    }
-    for(int idx=0; idx<times0; idx++)
-    {
-        r0[idx] = SumX0511[idx]/SumX0489[idx];
-    }
-    for(int i=0; i<Ns; i++)
-    {
-        double* __restrict__ WX0 = &this->Mat0[i*times0];//5.11
-        const double* __restrict__ Y = &Yfields[i].internalField()[0];
-        double* __restrict__ ptr = &DT[i].primitiveFieldRef()[0];
-        for(int idx=0; idx<times0; idx++)
+                        Info<<this->Dii_[i].internalField()[idx]<<endl;
+                    }
+                    }
+                for(int patchi=0;patchi<this->Dii_[i].boundaryField().size();patchi++)
         {
-            const double Ti = T.internalField()[idx];
-            const double Tr0_ = std::pow(Ti,0.659);
-            const double Yiidx = Y[idx];
-
-            const double number = -(2.59e-7);
-
-            ptr[idx] = number*Tr0_*(WX0[idx]/SumX0511[idx]-Yiidx)*(SumX0511[idx]/SumX0489[idx]);
-        }
-    }
-
-    //Do the boundary field
-
-    for(int patchi=0; patchi<T.boundaryField().size(); patchi++)
-    {
-        int times1 = T.boundaryField()[patchi].size();
-        for(int j=0; j<Ns; j++)
+                    const int times = this->Dii_[i].boundaryField()[patchi].size();
+                    for(int idx=0;idx<times;idx++)
         {
-            const double W0511j = W0511[j];
-            const double W0489j = W0489[j];
-            const double invWj = invW[j];
-
-            double* __restrict__ X = &this->Arr0[j*times1];
-            double* __restrict__ WX0 = &this->Mat0[j*times1];//5.11
-            const double* __restrict__ YPtr = &Yfields[j].boundaryField()[patchi][0];
-            const double* __restrict__ rhoPtr = &rho.boundaryField()[patchi][0];
-            const double* __restrict__ pPtr = &p.boundaryField()[patchi][0];
-            const double* __restrict__ TPtr = &T.boundaryField()[patchi][0];
-
-            for(int idx=0; idx<times1; idx++)
+                        Info<<this->Dii_[i].boundaryField()[patchi][idx]<<endl;
+    }
+                }
+            }
+            /*else
             {
-                const double rhoi = rhoPtr[idx];
-                const double pi = pPtr[idx];
-                const double Yji = YPtr[idx];
-                const double Ti = TPtr[idx];
-                const double Xji = Yji*rhoi*Ru*Ti/pi*invWj;
-                X[idx] = Xji;
-                WX0[idx] = W0511j*Xji;
-                SumX0511[idx] += W0511j*Xji;
-                SumX0489[idx] += W0489j*Xji;
+            {
+                    const int times = this->Dij_[i][j].internalField().size();
+                    for(int idx=0;idx<times;idx++)
+        {
+                        Info<<this->Dij_[i][j].internalField()[idx]<<endl;
             }
         }
-        for(int idx=0; idx<times1; idx++)
+                for(int patchi=0;patchi<this->Dij_[i][j].boundaryField().size();patchi++)
+    {
+                    const int times = this->Dij_[i][j].boundaryField()[patchi].size();
+                    for(int idx=0;idx<times;idx++)
         {
-            r0[idx] = SumX0511[idx]/SumX0489[idx];
-        }
-        for(int i=0; i<Ns; i++)
-        {
-            double* __restrict__ WX0 = &this->Mat0[i*times1];//5.11
-            const double* __restrict__ YPtr = &Yfields[i].boundaryField()[patchi][0];
-            const double* __restrict__ TPtr = &T.boundaryField()[patchi][0];
-            double* __restrict__ DTPtr = &DT[i].boundaryFieldRef()[patchi][0];
-
-            for(int idx=0; idx<times1; idx++)
-            {
-                const double Ti = TPtr[idx];
-                const double Tr0_ = std::pow(Ti,0.659);
-                const double Yiidx = YPtr[idx];
-
-                const double number = -(2.59e-7);
-
-                DTPtr[idx] = number*Tr0_*(WX0[idx]/SumX0511[idx]-Yiidx)*(SumX0511[idx]/SumX0489[idx]);
-            }
-        }
+                        Info<<this->Dij_[i][j].boundaryField()[patchi][idx]<<endl;
     }
 }
+            }*/
+    }
+    }
+
+    FatalErrorInFunction()
+        << "stop for debug "
+        << exit(FatalError);
+}
+
+// print Dij with fixed i, skip the Dii
+void FastMaxwellStefan::printDField(int i)
+{
+    Info<<"printing diffusion coefficient fields"<<endl;
+
+    {
+        for(int j=0;j<this->nSpecies;j++)
+            {
+            if(i!=j)
+            {
+                Info<<i<<"|"<<j<<endl;
+                {
+                    const int times = this->Dij_[i][j].internalField().size();
+                    for(int idx=0;idx<times;idx++)
+        {
+                        Info<<this->Dij_[i][j].internalField()[idx]<<endl;
+                    }
+        }
+                for(int patchi=0;patchi<this->Dij_[i][j].boundaryField().size();patchi++)
+                {
+                    const int times = this->Dij_[i][j].boundaryField()[patchi].size();
+                    for(int idx=0;idx<times;idx++)
+            {
+                        Info<<this->Dij_[i][j].boundaryField()[patchi][idx]<<endl;
+                    }
+                }
+            }
+        }
+    }
+
+    FatalErrorInFunction()
+        << "stop for debug "
+        << exit(FatalError);
+            }
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

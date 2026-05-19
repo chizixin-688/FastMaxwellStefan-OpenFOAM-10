@@ -82,6 +82,8 @@ public:
 
         void getDD(double* DD,double logT, double p, unsigned int nSpecies);
 
+        void getRecipDD(double* DD,double logT, double p, unsigned int nSpecies);
+
         void getLogT(const double* __restrict__ T, double* __restrict__ logT, int cells);
 
         inline double get_elem0(__m256d vec) 

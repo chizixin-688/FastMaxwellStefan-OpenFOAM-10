@@ -404,6 +404,148 @@ void CKDDreader::getDD(double* DD, double logT, double p, unsigned int nSpecies)
     }
 }
 
+// Compute 1.0/DD using log polynomial, the unit pressure in CHEMKIN is 101325Pa
+void CKDDreader::getRecipDD(double* DD, double logT, double p, unsigned int nSpecies)
+{
+    double scale = 10.1325/p;
+    __m256d scalev = _mm256_set1_pd(scale);
+    
+    __m256d logTv = _mm256_set1_pd(logT);
+    size_t remain = this->speciesPair.size()%4;
+    for(size_t i=0; i<this->speciesPair.size()-remain;i=i+4)
+    {
+        double a2 = this->CoeffTable[i+0][2];
+        double b2 = this->CoeffTable[i+1][2];
+        double c2 = this->CoeffTable[i+2][2];
+        double d2 = this->CoeffTable[i+3][2];
+        __m256d A2 = _mm256_setr_pd(a2,b2,c2,d2);
+
+        double a3 = this->CoeffTable[i+0][3];
+        double b3 = this->CoeffTable[i+1][3];
+        double c3 = this->CoeffTable[i+2][3];
+        double d3 = this->CoeffTable[i+3][3];
+        __m256d A3 = _mm256_setr_pd(a3,b3,c3,d3);
+        __m256d logDDv = _mm256_fmadd_pd(A3,logTv,A2);
+
+        double a1 = this->CoeffTable[i+0][1];
+        double b1 = this->CoeffTable[i+1][1];
+        double c1 = this->CoeffTable[i+2][1];
+        double d1 = this->CoeffTable[i+3][1];
+        __m256d A1 = _mm256_setr_pd(a1,b1,c1,d1);
+        logDDv = _mm256_fmadd_pd(logDDv,logTv,A1);
+
+        double a0 = this->CoeffTable[i+0][0];
+        double b0 = this->CoeffTable[i+1][0];
+        double c0 = this->CoeffTable[i+2][0];
+        double d0 = this->CoeffTable[i+3][0];
+        __m256d A0 = _mm256_setr_pd(a0,b0,c0,d0);
+        logDDv = _mm256_fmadd_pd(logDDv,logTv,A0);
+        __m256d DDv = vec256_expd(logDDv);
+        DDv = _mm256_mul_pd(DDv,scalev);
+        DDv = _mm256_div_pd(_mm256_set1_pd(1.0),DDv);
+        store256d(&this->result[i],DDv);
+    }
+    if(remain==1)
+    {
+        size_t i = this->speciesPair.size()-1;
+        double a0 = this->CoeffTable[i+0][0];
+        double a1 = this->CoeffTable[i+0][1];
+        double a2 = this->CoeffTable[i+0][2];
+        double a3 = this->CoeffTable[i+0][3];
+        double logDD = (a0+logT*(a1+logT*(a2+a3*logT)));
+        this->result[i] = 1.0/(std::exp(logDD)*scale);
+    }
+    else if(remain==2)
+    {
+        size_t i = this->speciesPair.size()-2;
+        double a2 = this->CoeffTable[i+0][2];
+        double b2 = this->CoeffTable[i+1][2];
+        double c2 = this->CoeffTable[i+0][2];
+        double d2 = this->CoeffTable[i+1][2];
+        __m256d A2 = _mm256_setr_pd(a2,b2,c2,d2);
+
+        double a3 = this->CoeffTable[i+0][3];
+        double b3 = this->CoeffTable[i+1][3];
+        double c3 = this->CoeffTable[i+0][3];
+        double d3 = this->CoeffTable[i+1][3];
+        __m256d A3 = _mm256_setr_pd(a3,b3,c3,d3);
+        __m256d logDDv = _mm256_fmadd_pd(A3,logTv,A2);
+
+        double a1 = this->CoeffTable[i+0][1];
+        double b1 = this->CoeffTable[i+1][1];
+        double c1 = this->CoeffTable[i+0][1];
+        double d1 = this->CoeffTable[i+1][1];
+        __m256d A1 = _mm256_setr_pd(a1,b1,c1,d1);
+        logDDv = _mm256_fmadd_pd(logDDv,logTv,A1);
+
+        double a0 = this->CoeffTable[i+0][0];
+        double b0 = this->CoeffTable[i+1][0];
+        double c0 = this->CoeffTable[i+0][0];
+        double d0 = this->CoeffTable[i+1][0];
+        __m256d A0 = _mm256_setr_pd(a0,b0,c0,d0);
+        logDDv = _mm256_fmadd_pd(logDDv,logTv,A0);
+        
+        __m256d DDv = vec256_expd(logDDv);
+        DDv = _mm256_mul_pd(DDv,scalev);
+        DDv = _mm256_div_pd(_mm256_set1_pd(1.0),DDv);
+        store128d(&this->result[i],_mm256_castpd256_pd128(DDv));
+    }
+    else if(remain==3)
+    {
+        size_t i = this->speciesPair.size()-3;
+        double a2 = this->CoeffTable[i+0][2];
+        double b2 = this->CoeffTable[i+1][2];
+        double c2 = this->CoeffTable[i+2][2];
+        double d2 = this->CoeffTable[i+2][2];
+        __m256d A2 = _mm256_setr_pd(a2,b2,c2,d2);
+
+        double a3 = this->CoeffTable[i+0][3];
+        double b3 = this->CoeffTable[i+1][3];
+        double c3 = this->CoeffTable[i+2][3];
+        double d3 = this->CoeffTable[i+2][3];
+        __m256d A3 = _mm256_setr_pd(a3,b3,c3,d3);
+        __m256d logDDv = _mm256_fmadd_pd(A3,logTv,A2);
+
+        double a1 = this->CoeffTable[i+0][1];
+        double b1 = this->CoeffTable[i+1][1];
+        double c1 = this->CoeffTable[i+2][1];
+        double d1 = this->CoeffTable[i+2][1];
+        __m256d A1 = _mm256_setr_pd(a1,b1,c1,d1);
+        logDDv = _mm256_fmadd_pd(logDDv,logTv,A1);
+
+        double a0 = this->CoeffTable[i+0][0];
+        double b0 = this->CoeffTable[i+1][0];
+        double c0 = this->CoeffTable[i+2][0];
+        double d0 = this->CoeffTable[i+2][0];
+        __m256d A0 = _mm256_setr_pd(a0,b0,c0,d0);
+        logDDv = _mm256_fmadd_pd(logDDv,logTv,A0);
+        
+        __m256d DDv = vec256_expd(logDDv);
+        DDv = _mm256_mul_pd(DDv,scalev);
+        DDv = _mm256_div_pd(_mm256_set1_pd(1.0),DDv);
+        this->result[i+0] = this->get_elem0(DDv);
+        this->result[i+1] = this->get_elem1(DDv);
+        this->result[i+2] = this->get_elem2(DDv);
+    }
+    int k = 0;
+    for(size_t i=0; i<nSpecies; i++)
+    {
+        for(size_t j=0; j<nSpecies; j++)
+        {
+            if(j>=i)
+            {
+                DD[i*nSpecies+j] = this->result[k];
+                k++;
+            }
+            else
+            {
+                DD[i*nSpecies+j] = DD[j*nSpecies+i];
+            }
+        }
+    }
+}
+
+
 void CKDDreader::getLogT
 (
     const double* __restrict__ T, 

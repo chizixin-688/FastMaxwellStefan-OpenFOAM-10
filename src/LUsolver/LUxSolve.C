@@ -22,6 +22,7 @@
 //---------------------------------
 #include <iostream>
 #include <cmath>
+#include <cstring> // std::memcpy
 
 //---------------------------------
 // 2. FastChemistry headers
@@ -47,10 +48,10 @@ void LUsolver::setInvMatrix
     for(unsigned int i=0; i<this->N; i++)
     {
         this->invMatRowPtr[i] = &invMatrix[i*this->alignN];
-        invMatrix[i*this->alignN+i] = 1.0;
+        //invMatrix[i*this->alignN+i] = 1.0;
     }
 
-
+    std::vector<double> temp(this->N); 
     for(unsigned int j = 0; j<this->N;j++)
     {
         if(this->pivotIndice_[j]==j)
@@ -58,7 +59,9 @@ void LUsolver::setInvMatrix
             continue;
         }
         unsigned int jTarget = this->pivotIndice_[j];
-        std::swap(invMatRowPtr[jTarget], invMatRowPtr[j]);
+        std::memcpy(temp.data(), invMatRowPtr[jTarget], sizeof(double)*this->N);
+        std::memcpy(invMatRowPtr[jTarget], invMatRowPtr[j], sizeof(double)*this->N);
+        std::memcpy(invMatRowPtr[j], temp.data(), sizeof(double)*this->N);
     }
 
 
@@ -230,7 +233,7 @@ void LUsolver::invMatrix56
 
             for(unsigned int j = 0; j < i; j++)
             {
-                //double* __restrict__ bj = this->invMatRowPtr[j];
+                //double* __restrict__ bj = invMatrix[j*this->N];
                 double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
@@ -318,7 +321,7 @@ void LUsolver::invMatrix56
             __m256d sum52v = load256d(&b[k*56+52+begin]);
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                //double* __restrict__ bj = this->invMatRowPtr[j];
+                //double* __restrict__ bj = invMatrix[j*this->N];
                 double* __restrict__ bj = &invMatrix[j*this->N];
                 __m256d vv = _mm256_set1_pd(-v_[i*this->N+j]);
 
@@ -413,7 +416,7 @@ void LUsolver::invMatrix52
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*52+0+begin]);
             __m256d sum4v = load256d(&b[k*52+4+begin]);
             __m256d sum8v = load256d(&b[k*52+8+begin]);
@@ -430,7 +433,7 @@ void LUsolver::invMatrix52
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -495,7 +498,7 @@ void LUsolver::invMatrix52
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*52+0+begin]);
             __m256d sum4v = load256d(&b[k*52+4+begin]);
@@ -512,7 +515,7 @@ void LUsolver::invMatrix52
             __m256d sum48v = load256d(&b[k*52+48+begin]);
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -602,7 +605,7 @@ void LUsolver::invMatrix48
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*48+0+begin]);
             __m256d sum4v = load256d(&b[k*48+4+begin]);
             __m256d sum8v = load256d(&b[k*48+8+begin]);
@@ -618,7 +621,7 @@ void LUsolver::invMatrix48
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -679,7 +682,7 @@ void LUsolver::invMatrix48
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*48+0+begin]);
             __m256d sum4v = load256d(&b[k*48+4+begin]);
@@ -695,7 +698,7 @@ void LUsolver::invMatrix48
             __m256d sum44v = load256d(&b[k*48+44+begin]);
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -778,7 +781,7 @@ void LUsolver::invMatrix44
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*44+0+begin]);
             __m256d sum4v = load256d(&b[k*44+4+begin]);
             __m256d sum8v = load256d(&b[k*44+8+begin]);
@@ -794,7 +797,7 @@ void LUsolver::invMatrix44
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -854,7 +857,7 @@ void LUsolver::invMatrix44
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*44+0+begin]);
             __m256d sum4v = load256d(&b[k*44+4+begin]);
@@ -870,7 +873,7 @@ void LUsolver::invMatrix44
 
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -953,7 +956,7 @@ void LUsolver::invMatrix40
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*40+0+begin]);
             __m256d sum4v = load256d(&b[k*40+4+begin]);
             __m256d sum8v = load256d(&b[k*40+8+begin]);
@@ -969,7 +972,7 @@ void LUsolver::invMatrix40
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1028,7 +1031,7 @@ void LUsolver::invMatrix40
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*40+0+begin]);
             __m256d sum4v = load256d(&b[k*40+4+begin]);
@@ -1044,7 +1047,7 @@ void LUsolver::invMatrix40
 
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1120,7 +1123,7 @@ void LUsolver::invMatrix36
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*36+0+begin]);
             __m256d sum4v = load256d(&b[k*36+4+begin]);
             __m256d sum8v = load256d(&b[k*36+8+begin]);
@@ -1133,7 +1136,7 @@ void LUsolver::invMatrix36
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1183,7 +1186,7 @@ void LUsolver::invMatrix36
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*36+0+begin]);
             __m256d sum4v = load256d(&b[k*36+4+begin]);
@@ -1198,7 +1201,7 @@ void LUsolver::invMatrix36
 
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1276,7 +1279,7 @@ void LUsolver::invMatrix32
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*32+0+begin]);
             __m256d sum4v = load256d(&b[k*32+4+begin]);
             __m256d sum8v = load256d(&b[k*32+8+begin]);
@@ -1288,7 +1291,7 @@ void LUsolver::invMatrix32
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1333,7 +1336,7 @@ void LUsolver::invMatrix32
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*32+0+begin]);
             __m256d sum4v = load256d(&b[k*32+4+begin]);
@@ -1348,7 +1351,7 @@ void LUsolver::invMatrix32
 
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1412,7 +1415,7 @@ void LUsolver::invMatrix28
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*28+0+begin]);
             __m256d sum4v = load256d(&b[k*28+4+begin]);
             __m256d sum8v = load256d(&b[k*28+8+begin]);
@@ -1424,7 +1427,7 @@ void LUsolver::invMatrix28
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1464,7 +1467,7 @@ void LUsolver::invMatrix28
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*28+0+begin]);
             __m256d sum4v = load256d(&b[k*28+4+begin]);
@@ -1476,7 +1479,7 @@ void LUsolver::invMatrix28
 
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1536,7 +1539,7 @@ void LUsolver::invMatrix24
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*24+0+begin]);
             __m256d sum4v = load256d(&b[k*24+4+begin]);
             __m256d sum8v = load256d(&b[k*24+8+begin]);
@@ -1546,7 +1549,7 @@ void LUsolver::invMatrix24
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1582,7 +1585,7 @@ void LUsolver::invMatrix24
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*24+0+begin]);
             __m256d sum4v = load256d(&b[k*24+4+begin]);
@@ -1592,7 +1595,7 @@ void LUsolver::invMatrix24
             __m256d sum20v = load256d(&b[k*24+20+begin]);
             for(unsigned int j = i+1; j<this->N; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1647,7 +1650,7 @@ void LUsolver::invMatrix20
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*20+0+begin]);
             __m256d sum4v = load256d(&b[k*20+4+begin]);
             __m256d sum8v = load256d(&b[k*20+8+begin]);
@@ -1656,7 +1659,7 @@ void LUsolver::invMatrix20
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1693,7 +1696,7 @@ void LUsolver::invMatrix20
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*20+0+begin]);
             __m256d sum4v = load256d(&b[k*20+4+begin]);
@@ -1706,7 +1709,7 @@ void LUsolver::invMatrix20
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1756,7 +1759,7 @@ void LUsolver::invMatrix16
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*16+0+begin]);
             __m256d sum4v = load256d(&b[k*16+4+begin]);
             __m256d sum8v = load256d(&b[k*16+8+begin]);
@@ -1764,7 +1767,7 @@ void LUsolver::invMatrix16
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1797,7 +1800,7 @@ void LUsolver::invMatrix16
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*16+0+begin]);
             __m256d sum4v = load256d(&b[k*16+4+begin]);
@@ -1809,7 +1812,7 @@ void LUsolver::invMatrix16
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1855,14 +1858,14 @@ void LUsolver::invMatrix12
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*12+0+begin]);
             __m256d sum4v = load256d(&b[k*12+4+begin]);
             __m256d sum8v = load256d(&b[k*12+8+begin]);
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1890,7 +1893,7 @@ void LUsolver::invMatrix12
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*12+0+begin]);
             __m256d sum4v = load256d(&b[k*12+4+begin]);
@@ -1901,7 +1904,7 @@ void LUsolver::invMatrix12
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -1941,14 +1944,14 @@ void LUsolver::invMatrix8
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*8+0+begin]);
             __m256d sum4v = load256d(&b[k*8+4+begin]);
 
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -1971,7 +1974,7 @@ void LUsolver::invMatrix8
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*8+0+begin]);
             __m256d sum4v = load256d(&b[k*8+4+begin]);
@@ -1981,7 +1984,7 @@ void LUsolver::invMatrix8
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -2016,14 +2019,14 @@ void LUsolver::invMatrix4
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m256d sum0v = load256d(&b[k*4+0+begin]);
 
 
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -2043,7 +2046,7 @@ void LUsolver::invMatrix4
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m256d sum0v = load256d(&b[k*4+0+begin]);
 
@@ -2053,7 +2056,7 @@ void LUsolver::invMatrix4
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -2087,7 +2090,7 @@ void LUsolver::invMatrix3
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             //__m256d sum0v = load256d(&b[k*4+0+begin]);
             __m256d sum0v = _mm256_setr_pd(b[k*3+0+begin],b[k*3+1+begin],b[k*3+2+begin],0);
 
@@ -2095,7 +2098,7 @@ void LUsolver::invMatrix3
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
@@ -2121,7 +2124,7 @@ void LUsolver::invMatrix3
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             //__m256d sum0v = load256d(&b[k*4+0+begin]);
             __m256d sum0v = _mm256_setr_pd(b[k*3+0+begin],b[k*3+1+begin],b[k*3+2+begin],0);
@@ -2132,7 +2135,7 @@ void LUsolver::invMatrix3
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m256d vv = _mm256_set1_pd(-v_[i*alignN+j]);
 
@@ -2168,13 +2171,13 @@ void LUsolver::invMatrix2
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             __m128d sum0v = load128d(&b[k*2+0+begin]);
 
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 __m128d vv = _mm_set1_pd(-v_[i*alignN+j]);
@@ -2194,7 +2197,7 @@ void LUsolver::invMatrix2
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             __m128d sum0v = load128d(&b[k*2+0+begin]);
 
@@ -2204,7 +2207,7 @@ void LUsolver::invMatrix2
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 __m128d vv = _mm_set1_pd(-v_[i*alignN+j]);
 
@@ -2236,13 +2239,13 @@ void LUsolver::invMatrix1
     {
         for(int k = 0; k < times; k=k+1)
         {
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
             double sum0v = (b[k*1+0+begin]);
 
 
             for(unsigned int j = 0; j < i; j++)
             {
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 //sum = sum - v_[i*alignN+j]*b[j];
                 double vv = (-v_[i*alignN+j]);
@@ -2261,7 +2264,7 @@ void LUsolver::invMatrix1
         {
             //double sum = b[i];
             //get pointer for i-th row
-            double* __restrict__ b = this->invMatRowPtr[i];
+            double* __restrict__ b = &invMatrix[i*this->N];
 
             double sum0v = (b[k*1+0+begin]);
 
@@ -2271,7 +2274,7 @@ void LUsolver::invMatrix1
                 //sum = sum - v_[i*alignN+j]*xj;
 
                 //get j-th row
-                double* __restrict__ bj = this->invMatRowPtr[j];
+                double* __restrict__ bj = &invMatrix[j*this->N];
 
                 double vv = (-v_[i*alignN+j]);
 
